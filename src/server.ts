@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const knex = require('./database/connection'); // Importe a instância Knex
 const mapRoutes = require('./routes/mapRoutes');
 
 const app = express();

@@ -1,4 +1,4 @@
-const knex = require('../database/connection'); // Importe a instância Knex
+const knex = require('../database/connection'); 
 
 exports.criarMapa = async (req: any, res: any) => {
   try {
@@ -11,7 +11,7 @@ exports.criarMapa = async (req: any, res: any) => {
 
     const mapaExistente = await knex('mapas').where('nome', nomeMapa).first();
     if (mapaExistente) {
-      return res.status(409).json({ error: 'Já existe um mapa com este nome.' });
+      return res.status(400).json({ error: 'Já existe um mapa com este nome.' });
     }
 
     if (isNaN(quantidadeCorredores) || quantidadeCorredores <= 0) {
