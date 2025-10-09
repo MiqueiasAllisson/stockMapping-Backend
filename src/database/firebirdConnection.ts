@@ -1,6 +1,8 @@
 
 const fb = require('node-firebird');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+dotenv.config({ silent: true }); // ← Adicionar silent: true
 
 const config = {
     host: process.env.FB_HOST,
