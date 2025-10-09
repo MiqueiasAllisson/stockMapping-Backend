@@ -2,46 +2,46 @@ const knex = require('../database/connection');
 
 exports.criarMapa = async (req: any, res: any) => {
   try {
-    const quantidadeCorredores = parseInt(req.body.quantidadeCorredores);
-    const nomeMapa = req.body.nomeMapa;
+    const numberRunners = parseInt(req.body.numberRunners);
+    const mapName = req.body.mapName;
 
-    if (!nomeMapa || nomeMapa.trim() === '') {
+    if (!mapName || mapName.trim() === '') {
       return res.status(400).json({ error: 'Nome do mapa é obrigatório.' });
     }
 
-    const mapaExistente = await knex('mapas').where('nome', nomeMapa).first();
-    if (mapaExistente) {
+    const existingMap = await knex('mapas').where('nome', mapName).first();
+    if (existingMap) {
       return res.status(400).json({ error: 'Já existe um mapa com este nome.' });
     }
 
-    if (isNaN(quantidadeCorredores) || quantidadeCorredores <= 0) {
+    if (isNaN(numberRunners) || numberRunners <= 0) {
       return res.status(400).json({ error: 'Quantidade de corredores inválida. Deve ser um número inteiro positivo.' });
     }
 
     await knex.transaction(async (trx: any) => {
       const [mapa_id] = await knex('mapas')
-        .insert({ nome: nomeMapa })
+        .insert({ nome: mapName })
         .transacting(trx); 
 
-      const corredores = [];
-      for (let i = 0; i < quantidadeCorredores; i++) {
-        corredores.push({
+      const runners = [];
+      for (let i = 0; i < numberRunners; i++) {
+        runners.push({
           mapa_id: mapa_id,
           nome: `Corredor ${i + 1}`
         });
       }
 
-      await knex('corredores').insert(corredores).transacting(trx);
+      await knex('corredores').insert(runners).transacting(trx);
 
       await trx.commit();
 
-      const corredoresCriados = await knex('corredores').where('mapa_id', mapa_id);
+      const runnersCreated = await knex('corredores').where('mapa_id', mapa_id);
 
       const mapa = {
         mapa_id: mapa_id,
-        nomeMapa: nomeMapa, 
-        quantidadeCorredores: quantidadeCorredores,
-        corredores: corredoresCriados
+        mapName: mapName, 
+        numberRunners: numberRunners,
+        runners: runnersCreated
       };
 
       res.status(201).json({ message: 'Mapa criado com sucesso!', mapa: mapa });
@@ -143,4 +143,58 @@ exports.pesquisarMapa = async (req: any, res: any) => {
     console.error("Erro ao pesquisar mapa:", error);
     res.status(500).json({ error: 'Erro ao pesquisar mapa' });
   }
+};
+
+
+
+exports.deletarMapa = async (req: any, res: any) => {
+  try {
+    const { mapa_id } = req.params;
+
+    if (!mapa_id || isNaN(parseInt(mapa_id))) {
+      return res.status(400).json({ error: 'ID do mapa é obrigatório e deve ser um número válido.' });
+    }
+
+    const mapaId = parseInt(mapa_id);
+
+    const mapaExistente = await knex('mapas').where('mapa_id', mapaId).first();
+    if (!mapaExistente) {
+      return res.status(404).json({ error: 'Mapa não encontrado.' });
+    }
+
+    await knex.transaction(async (trx: any) => {
+  
+      await knex('prateleiras')
+        .whereIn('corredor_id', function(this: any) {
+          this.select('corredor_id').from('corredores').where('mapa_id', mapaId);
+        })
+        .del()
+        .transacting(trx);
+
+      await knex('corredores')
+        .where('mapa_id', mapaId)
+        .del()
+        .transacting(trx);
+
+      await knex('mapas')
+        .where('mapa_id', mapaId)
+        .del()
+        .transacting(trx);
+
+      await trx.commit();
+    });
+
+    res.status(200).json({ 
+      message: 'Mapa deletado com sucesso!',
+      mapa_deletado: {
+        mapa_id: mapaId,
+        nome: mapaExistente.nome
+      }
+    });
+
+  } catch (error) {
+    console.error("Erro ao deletar mapa:", error);
+    res.status(500).json({ error: 'Erro ao deletar mapa' });
+  }
+
 };
