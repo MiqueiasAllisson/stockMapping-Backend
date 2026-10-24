@@ -37,4 +37,4 @@ As variáveis de ambiente (conexão com o Firebird e porta da API) são lidas de
 
 ## Autor
 
-**Miqueias Allisson** - [LinkedIn](https://www.linkedin.com/in/miqueias-allisson-a07a43212/) · [GitHub](https://github.com/MiqueiasAllisson)
+**Miqueias Allisson** - [LinkedIn](https://www.linkedin.com/in/miqueias-allisson/) · [GitHub](https://github.com/MiqueiasAllisson)
